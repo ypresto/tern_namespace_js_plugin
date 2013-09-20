@@ -15,17 +15,18 @@
     var context        = infer.cx();
     var namespaceClass = context.definitions.namespace.namespaceClass;
     var type           = _self.getType();
-    if (type && type.proto === namespaceClass && type._nsIsInitialized) {
+    if (type && type.proto === namespaceClass && type.__nsInfo) {
       return _self;
     }
 
     var nsDisplayName = nsName || "__ANON__";
 
     var instanceType = new infer.Obj(namespaceClass, "Namespace@" + nsDisplayName);
-    instanceType._nsIsInitialized = true;
-    instanceType._nsDisplayName   = nsDisplayName;
-    instanceType._nsName          = nsName;
-    instanceType._uses            = [];
+    instanceType.__nsInfo = {
+      displayName : nsDisplayName,
+      name        : nsName,
+      uses        : []
+    };
     return instanceType;
   }
 
@@ -121,15 +122,17 @@
     }
 
     var instance = getNamespaceInstance(_self);
-    instance.getType(false)._uses.push(argNodes[0].value);
+    instance.getType(false).__nsInfo.uses.push(argNodes[0].value);
 
     return instance;
   });
 
   function buildNsObj(instanceType, data) {
-    var context = infer.cx();
-    var nsObjType = new infer.Obj(context.definitions.namespace.nsObj, "nsObj@" + instanceType._nsDisplayName);
-    instanceType._uses.forEach(function(useText) {
+    var context   = infer.cx();
+    var nsInfo    = instanceType.__nsInfo;
+    var nsObjType = new infer.Obj(context.definitions.namespace.nsObj, "nsObj@" + nsInfo.displayName);
+
+    nsInfo.uses.forEach(function(useText) {
       var nsAndImports = useText.split(/\s+/, 2);
       var nsName       = nsAndImports[0];
       var importText   = nsAndImports[1];
@@ -163,13 +166,14 @@
 
     var instance      = getNamespaceInstance(_self);
     var instanceType  = instance.getType(false);
+    var nsInfo        = instanceType.__nsInfo;
     var nsObj         = buildNsObj(instanceType, data);
-    var provide       = defProvide(instanceType._nsName, data);
+    var provide       = defProvide(nsInfo.name, data);
     var provideMethod = nsObj.defProp("provide");
     provideMethod.addType(new infer.Fn("provide", instance, [provide], ["obj"], infer.ANull));
     fn.propagate(new infer.IsCallee(infer.ANull, [nsObj], null, infer.ANull));
 
-    if (data.debug) console.log("Namespace('" + instanceType._nsName + "').define()");
+    if (data.debug) console.log("Namespace('" + nsInfo.name + "').define()");
 
     return infer.ANull;
   });
@@ -179,7 +183,7 @@
       provides: Object.create(null),
       options: options || {},
       server: server,
-      debug : server.debug
+      debug : options.debug
     };
 
     server.on("reset", function() {

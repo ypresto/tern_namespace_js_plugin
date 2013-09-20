@@ -15,14 +15,14 @@
     var context        = infer.cx();
     var namespaceClass = context.definitions.namespace.namespaceClass;
     var type           = _self.getType();
-    if (type && type.proto === namespaceClass && type.__nsInfo) {
+    if (type && type.proto === namespaceClass && type._nsInfo) {
       return _self;
     }
 
     var nsDisplayName = nsName || "__ANON__";
 
     var instanceType = new infer.Obj(namespaceClass, "Namespace@" + nsDisplayName);
-    instanceType.__nsInfo = {
+    instanceType._nsInfo = {
       displayName : nsDisplayName,
       name        : nsName,
       uses        : []
@@ -39,6 +39,7 @@
     if (basePaths.length === 0) {
       basePaths.push("./");
     }
+
     var nsPath = nsName.replace(/\./g, "/") + ".js";
     var paths = [];
     basePaths.forEach(function(base) {
@@ -46,7 +47,7 @@
       var actualNsPath;
       if (typeof base === "string") {
         actualBasePath = base;
-        actualNsPath = nsPath;
+        actualNsPath   = nsPath;
       } else if (base.path && base.prefix) {
         actualBasePath = base.path;
         var prefix = base.prefix.replace(/\.?$/, '.');
@@ -54,8 +55,8 @@
         actualNsPath = nsPath.substr(prefix.length);
       } else if (base.path && base.replace){
         actualBasePath = base.path;
-        var regexp = new RegExp(base.replace[0], base.replace[2]);
-        actualNsPath = nsPath.replace.apply(regexp, base.replace[1]);
+        var regexp     = new RegExp(base.replace[0], base.replace[2]);
+        actualNsPath   = nsPath.replace.apply(regexp, base.replace[1]);
         if (actualNsPath === nsPath) return; // no match
       } else {
         throw new Error("bad basePath(s) configuration");
@@ -122,14 +123,14 @@
     }
 
     var instance = getNamespaceInstance(_self);
-    instance.getType(false).__nsInfo.uses.push(argNodes[0].value);
+    instance.getType(false)._nsInfo.uses.push(argNodes[0].value);
 
     return instance;
   });
 
   function buildNsObj(instanceType, data) {
     var context   = infer.cx();
-    var nsInfo    = instanceType.__nsInfo;
+    var nsInfo    = instanceType._nsInfo;
     var nsObjType = new infer.Obj(context.definitions.namespace.nsObj, "nsObj@" + nsInfo.displayName);
 
     nsInfo.uses.forEach(function(useText) {
@@ -166,7 +167,7 @@
 
     var instance      = getNamespaceInstance(_self);
     var instanceType  = instance.getType(false);
-    var nsInfo        = instanceType.__nsInfo;
+    var nsInfo        = instanceType._nsInfo;
     var nsObj         = buildNsObj(instanceType, data);
     var provide       = defProvide(nsInfo.name, data);
     var provideMethod = nsObj.defProp("provide");
@@ -180,10 +181,10 @@
 
   tern.registerPlugin("namespace", function(server, options) {
     server._Namespace = {
-      provides: Object.create(null),
-      options: options || {},
-      server: server,
-      debug : options.debug
+      provides : Object.create(null),
+      options  : options || {},
+      server   : server,
+      debug    : options.debug
     };
 
     server.on("reset", function() {
@@ -196,7 +197,6 @@
     "!name"   : "namespace",
     "!define" : {
       nsObj: {
-        "!doc"  : "Private namespace object. Contains imported properties and namespaces.",
         provide : {
           "!doc" : "Publish specified object to other namespaces.",
           "!type" : "fn(+Object)"

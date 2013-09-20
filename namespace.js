@@ -1,3 +1,4 @@
+/*jshint indent:2*/
 (function(mod) {
   /*jshint node:true, strict:false */
   /*global define:false, tern:false */
@@ -152,6 +153,16 @@
           nsObjType.propagate(new infer.PropHasSubset(importName, provide.getProp(importName)));
         });
       }
+      var canonicalNs = nsName.split('.').reduce(function(val, nsFragment) {
+        var prop = new infer.Obj(true);
+        val.propagate(new infer.PropHasSubset(nsFragment, prop));
+        return prop;
+      }, nsObjType);
+      provide.forAllProps(function(prop, val, local) {
+        if (local && prop !== "prototype" && prop !== "<i>") {
+          canonicalNs.propagate(new infer.PropHasSubset(prop, val));
+        }
+      });
     });
     return nsObjType;
   }
@@ -212,12 +223,12 @@
         define : {
           "!doc"  : "Define namespace with callback func (as needed). Make sure ns.provide() to be called.",
           "!type" : "fn(callback: fn(ns: nsObj)) -> !custom:NamespaceDefine",
- 
+
         },
         apply : {
           "!doc"  : "Run callback func with imported namespaces.",
           "!type" : "fn(callback: fn(ns: nsObj)) -> !custom:NamespaceDefine",
- 
+
         },
       },
     },

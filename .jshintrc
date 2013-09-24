@@ -1,0 +1,14 @@
+{
+  "strict"    : true,
+  "bitwise"   : true,
+  "curly"     : false,
+  "eqeqeq"    : true,
+  "immed"     : true,
+  "noarg"     : true,
+  "regexp"    : true,
+  "undef"     : true,
+  "noempty"   : true,
+  "trailing"  : true,
+  "camelcase" : true,
+  "indent"    : 2
+}

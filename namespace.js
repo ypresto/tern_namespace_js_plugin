@@ -1,4 +1,3 @@
-/*jshint indent:2*/
 (function(mod) {
   /*jshint node:true, strict:false */
   /*global define:false, tern:false */

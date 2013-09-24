@@ -51,7 +51,7 @@
         actualNsPath   = nsPath;
       } else if (base.path && base.prefix) {
         actualBasePath = base.path;
-        var prefix = base.prefix.replace(/\.?$/, '.');
+        var prefix = base.prefix.replace(/\.?$/, ".");
         if (nsName.indexOf(prefix) !== 0) return;
         actualNsPath = nsPath.substr(prefix.length);
       } else if (base.path && base.replace){
@@ -103,7 +103,8 @@
     if ( !(data && argNodes) ) return infer.ANull;
 
     var nsName;
-    if (argNodes.length && argNodes[0].type === "Literal" && typeof argNodes[0].value === "string") {
+    if (argNodes.length &&
+        argNodes[0].type === "Literal" && typeof argNodes[0].value === "string") {
       nsName = argNodes[0].value;
     }
 
@@ -116,16 +117,13 @@
     var context = infer.cx();
     var server = context.parent;
     var data = server && server._Namespace;
-    if ( !(
-      data && argNodes &&
-      (argNodes.length && argNodes[0].type === "Literal" && typeof argNodes[0].value === "string")
-    ) ) {
+    if ( !(data && argNodes && argNodes.length &&
+        argNodes[0].type === "Literal" && typeof argNodes[0].value === "string") ) {
       return _self;
     }
 
     var instance = getNamespaceInstance(_self);
     instance.getType(false)._nsInfo.uses.push(argNodes[0].value);
-
     return instance;
   });
 
@@ -134,34 +132,42 @@
     var nsInfo    = instanceType._nsInfo;
     var nsObjType = new infer.Obj(context.definitions.namespace.nsObj, "nsObj@" + nsInfo.displayName);
 
+    var isImportedNsName = {};
+
     nsInfo.uses.forEach(function(useText) {
       var nsAndImports = useText.split(/\s+/, 2);
       var nsName       = nsAndImports[0];
-      var importText   = nsAndImports[1];
-      if ( !(nsName && importText) ) return;
-      var imports      = importText.split(/\s*,\s*/);
-
+      if (!nsName) return;
       var provide = getProvide(nsName, data);
-      if (imports.indexOf("*") !== -1 ) {
+
+      if (!isImportedNsName[nsName]) {
+        var nsFragments = nsName.split(".");
+        var importObj = nsObjType;
+        nsFragments.forEach(function(nsFragment) {
+          var type = importObj.getType(false);
+          if (!type) {
+            type = new infer.Obj(true);
+            importObj.addType(type);
+          }
+          importObj = type.defProp(nsFragment);
+        });
+        provide.propagate(importObj);
+        isImportedNsName[nsName] = true;
+      }
+
+      var importText = nsAndImports[1];
+      if (!importText) return;
+      var imports = importText.split(/\s*,\s*/);
+      if (imports.indexOf("*") > -1 ) {
         provide.forAllProps(function(prop, val, local) {
           if (local && prop !== "prototype" && prop !== "<i>") {
             nsObjType.propagate(new infer.PropHasSubset(prop, val));
           }
         });
-      } else {
-        imports.forEach(function(importName) {
-          nsObjType.propagate(new infer.PropHasSubset(importName, provide.getProp(importName)));
-        });
+        return;
       }
-      var canonicalNs = nsName.split('.').reduce(function(val, nsFragment) {
-        var prop = new infer.Obj(true);
-        val.propagate(new infer.PropHasSubset(nsFragment, prop));
-        return prop;
-      }, nsObjType);
-      provide.forAllProps(function(prop, val, local) {
-        if (local && prop !== "prototype" && prop !== "<i>") {
-          canonicalNs.propagate(new infer.PropHasSubset(prop, val));
-        }
+      imports.forEach(function(importName) {
+        nsObjType.propagate(new infer.PropHasSubset(importName, provide.getProp(importName)));
       });
     });
     return nsObjType;
@@ -207,7 +213,7 @@
   var defs = {
     "!name"   : "namespace",
     "!define" : {
-      nsObj: {
+      nsObj : {
         provide : {
           "!doc" : "Publish specified object to other namespaces.",
           "!type" : "fn(+Object)"

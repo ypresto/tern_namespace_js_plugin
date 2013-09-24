@@ -6,6 +6,10 @@ Plugin for [tern](https://github.com/marijnh/tern) that enables it to understand
 ## Installation
 
 1. Install [tern](http://ternjs.net/).
+    * vim: [tern_for_vim](https://github.com/marijnh/tern_for_vim)
+    * emacs: [tern.el](http://ternjs.net/doc/manual.html#emacs) in tern main repo
+    * sublime: [tern_for_sublime](https://github.com/marijnh/tern_for_sublime)
+
 2. Copy the **namespace.js** file from this repository into your tern plugin directory. For Example:
 
   ```bash

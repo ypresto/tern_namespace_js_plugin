@@ -64,4 +64,17 @@ Currently these options supported:
 
 * debug : enable verbose logging. boolean.
 
+## Create plugin / defs of specific namespace
+
+This plugin supports custom plugin and defs tied with specific namespace.
+To define:
+
+1. Create (plugin or json) defs with its name is "namespace_def__your.namespace.name",
+    i.e. `"!name": "namespace_def__your.namespace.name"`.
+2. Add __provide__ in !define, which will be treated as the argument of provide(),
+    i.e. `"!define": { "__provide__": { "someExportedMethods" : ... } }`.
+    You can use !custom: retvals or effects as other tern plugins/defs.
+3. Load plugin or defs as usual,
+    i.e. add to plugins or libs (for json) of .tern-project.
+
 \# This README was lent from [AngularJS plugin](https://github.com/angular-ui/AngularJS-tern-plugin) one. thx!

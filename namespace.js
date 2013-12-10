@@ -204,25 +204,29 @@
     };
 
     server.on("reset", function() {
-      var _server = this;
-      _server._Namespace.provides = Object.create(null);
-
-      var context = this.cx;
-      var nsDefRegExp = /^namespace_def__(.+)$/;
-      Object.keys(context.definitions).forEach(function(key) {
-        var result = nsDefRegExp.exec(key);
-        if (result) {
-          var nsName  = result[1];
-          // NOTE: __provide__ got warn of non-camelcase, jshint bug?
-          /*jshint camelcase:false*/
-          var provide = context.definitions[key].__provide__;
-          if (!provide) return;
-          _server._Namespace.provides[nsName] = provide;
-          if (options.debug) console.log("namespace: found nsDef: " + nsName);
-        }
-      });
+      server._Namespace.provides = Object.create(null);
     });
-    return {defs : defs};
+    return {
+      defs   : defs,
+      passes : {
+        postLoadDef : function() {
+          var context = infer.cx();
+          var nsDefRegExp = /^namespace_def__(.+)$/;
+          Object.keys(context.definitions).forEach(function(key) {
+            var result = nsDefRegExp.exec(key);
+            if (result) {
+              var nsName  = result[1];
+              // NOTE: __provide__ got warn of non-camelcase, jshint bug?
+              /*jshint camelcase:false*/
+              var provide = context.definitions[key].__provide__;
+              if (!provide) return;
+              server._Namespace.provides[nsName] = provide;
+              if (options.debug) console.log("namespace: found nsDef: " + nsName);
+            }
+          });
+        }
+      }
+    };
   });
 
   var defs = {
